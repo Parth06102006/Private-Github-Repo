@@ -1,8 +1,10 @@
 import React from 'react'
+import RTE from './RTE'
+import {Brain} from 'lucide-react'
 
 const Home = () => {
   return (
-    <div className='md:flex'>
+    <div className='md:flex md:mt-[80px]'>
         <h1 className='block md:hidden text-3xl font-bold text-center mt-3 mb-8'>Github Readme Generator</h1>
         <div className='flex h-1/2 items-center justify-center md:inline-block md:ml-5 mt-15'>
         <div className='right-0 mr-5 bg-blue-900/10 p-4 rounded-t-4xl max-w-fit'>
@@ -27,8 +29,16 @@ const Home = () => {
                     <option>Safari</option>
                 </select>
             </fieldset>
+            <div className='md:ml-40'>
+                <button
+                    className="hidden md:flex btn btn-xl btn-outline btn-secondary items-center gap-2 mt-5 "
+                    >
+                    <Brain size={20} />
+                    {'Generate Readme'}
+                </button>
+            </div>
         </div>
-        
+        <RTE/>
     </div>
   )
 }

@@ -36,13 +36,14 @@ const getAccessToken = asyncHandler(async(req,res)=>{
 
     const options = {
         httpOnly:true,
+        secure:!(process.env.NODE_ENV === 'development'),
         sameSite:(process.env.NODE_ENV === 'development') ? 'none' : 'lax'
     }
     
     return res.status(200).cookie('token',access_token,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
 })
 
-const getRepositories = asyncHandler(async(req,res)=>{
+const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
     const token = req.cookies.token || req.body.token;
     console.log('Token : ',token)
     if(!token)
@@ -56,15 +57,31 @@ const getRepositories = asyncHandler(async(req,res)=>{
         }
     })
 
+    const {
+        login,
+        name,
+        avatar_url,
+        html_url,
+        location,
+        email,
+        public_repos,
+        total_private_repos,
+        followers,
+        following,
+        created_at,
+        plan
+    } = response.data;
+
     const user = response.data.login;
     console.log(user)
 
-    const publicRepoResponse = await axios.get(`https://api.github.com/users/${user}?repos`,{
+    const publicRepoResponse = await axios.get(`https://api.github.com/users/${user}?repos?per_page=100`,{
         headers:{
             'Authorization':`Bearer ${token}`
         }
     })
-    const allRepos = [];
+    const publicRepoNames = publicRepoResponse.data.map(repo=>repo.name) ;
+    const privateRepoNames = [];
     let page = 1;
     while(true)
     {
@@ -74,7 +91,7 @@ const getRepositories = asyncHandler(async(req,res)=>{
             }
         )
         if(privateResponse.data.length === 0) break;
-        allRepos.push({...privateResponse.data});
+        privateResponse.data.map(repo=>repo.name);
         page++;
     }
 
@@ -82,10 +99,10 @@ const getRepositories = asyncHandler(async(req,res)=>{
         200,
         'Fetched All the Details of the User'
     ,{
-        user:response.data,
-        publicRepos:publicRepoResponse.data,
-        privateRepos:allRepos
+        user:{login,name,avatar_url,html_url,location,email,public_repos,total_private_repos,followers,following,created_at,plan},
+        publicRepos:publicRepoNames,
+        privateRepos:privateRepoNames
     }));
 })
 
-export {auth,getAccessToken,getRepositories}
+export {auth,getAccessToken,getUserInfo_Repositories}

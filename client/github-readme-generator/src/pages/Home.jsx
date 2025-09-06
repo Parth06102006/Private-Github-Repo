@@ -1,8 +1,34 @@
 import React from 'react'
 import RTE from './RTE'
 import {Brain,Lock} from 'lucide-react'
+import { useEffect } from 'react'
+import axios from 'axios'
 
 const Home = () => {
+
+    useEffect(()=>{
+        const backend_url = import.meta.env.VITE_BACKEND_URL;
+        async function sendCode()
+        {
+            const urlParams = window.URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const response = await axios.post(`${backend_url}/api/v1/auth/getToken`,{
+                code
+            },
+            {
+                headers:{"Content-Type":"application/json"}
+            }
+        )
+            console.log(response);
+        }
+
+        async function getPublicandPrivateRepos()
+        {
+            await axios.get(`${backend_url}/api/v1/repo/list`)
+        }
+        sendCode();
+        getPublicandPrivateRepos();
+    },[])
   return (
     <div className='md:flex md:mt-[80px]'>
         <h1 className='block md:hidden text-3xl font-bold text-center mt-3 mb-8'>Github Readme Generator</h1>

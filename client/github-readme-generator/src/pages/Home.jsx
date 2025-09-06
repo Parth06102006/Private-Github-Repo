@@ -1,6 +1,6 @@
 import React from 'react'
 import RTE from './RTE'
-import {Brain} from 'lucide-react'
+import {Brain,Lock} from 'lucide-react'
 
 const Home = () => {
   return (
@@ -22,12 +22,20 @@ const Home = () => {
             <h1 className='hidden md:block text-6xl font-bold text-center mt-3 mb-8'>Github Readme Generator</h1>
             <fieldset className="mt-6 md:mt-3 ">
                 <legend className="fieldset-legend text-2xl  mt-3">Github Repositories</legend>
-                <select defaultValue="Pick the Repository" className="select select-primary md:w-ful">
-                    <option disabled={true}>Pick a Repository</option>
+                <div className='flex gap-4'>
+                <select defaultValue="Pick A Repository" className="select select-primary md:w-ful">
+                    <option disabled={true}>Pick a Public Repository</option>
                     <option>Chrome</option>
                     <option>FireFox</option>
                     <option>Safari</option>
                 </select>
+                <select defaultValue="Pick the Repository" className="select select-primary md:w-ful">
+                    <option disabled={true}>Pick a Private Repository</option>
+                    <option><Lock size={10}/> Chrome</option>
+                    <option><Lock size={10}/> FireFox</option>
+                    <option><Lock size={10}/> Safari</option>
+                </select>
+                </div>
             </fieldset>
             <div className='md:ml-40'>
                 <button

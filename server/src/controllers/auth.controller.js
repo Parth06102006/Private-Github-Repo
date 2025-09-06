@@ -1,0 +1,91 @@
+import { asyncHandler } from "../utils/asyncHandler.js";
+import ApiError from "../utils/ApiError.js";
+import ApiResponse from "../utils/ApiResponse.js";
+import axios from 'axios'
+
+const auth = asyncHandler(async(req,res)=>{
+    const redirect_url = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_url=${process.env.REDIRECT_URL}&scope=repo%20read:user`;
+
+    return res.redirect(redirect_url);
+})
+
+const getAccessToken = asyncHandler(async(req,res)=>{
+    const {code} = req.query;
+    if(!code)
+        {
+            throw new ApiError(400,'No Code Found');
+        }
+    const response = await axios.post('https://github.com/login/oauth/access_token',{
+            client_id:process.env.GITHUB_CLIENT_ID,
+            client_secret:process.env.GITHUB_CLIENT_SECRET,
+            code
+        },
+        {
+            headers:{Accept:'application/json'}
+        }
+    )
+
+    console.log(response)
+
+    const {access_token,token_type,scope} = response.data;
+
+    if(!access_token||!token_type||!scope)
+    {
+        throw new ApiError(500,'Error receiving the credentials');
+    }
+
+    const options = {
+        httpOnly:true,
+        sameSite:(process.env.NODE_ENV === 'development') ? 'none' : 'lax'
+    }
+    
+    return res.status(200).cookie('token',access_token,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
+})
+
+const getRepositories = asyncHandler(async(req,res)=>{
+    const token = req.cookies.token || req.body.token;
+    console.log('Token : ',token)
+    if(!token)
+    {
+        throw new ApiError(400,'No Access Token Found');
+    }
+
+    const response = await axios.get(`https://api.github.com/user`,{
+        headers:{
+            'Authorization':`Bearer ${token}`
+        }
+    })
+
+    const user = response.data.login;
+    console.log(user)
+
+    const publicRepoResponse = await axios.get(`https://api.github.com/users/${user}?repos`,{
+        headers:{
+            'Authorization':`Bearer ${token}`
+        }
+    })
+    const allRepos = [];
+    let page = 1;
+    while(true)
+    {
+        const privateResponse = await axios.get(`https://api.github.com/user/repos?visibility=private&per_page=100&page=${page}`,
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        )
+        if(privateResponse.data.length === 0) break;
+        allRepos.push({...privateResponse.data});
+        page++;
+    }
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        'Fetched All the Details of the User'
+    ,{
+        user:response.data,
+        publicRepos:publicRepoResponse.data,
+        privateRepos:allRepos
+    }));
+})
+
+export {auth,getAccessToken,getRepositories}

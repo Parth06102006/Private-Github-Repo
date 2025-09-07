@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import RTE from './RTE'
 import {Brain,Lock} from 'lucide-react'
 import { useEffect } from 'react'
 import axios from 'axios'
+import { AuthContext } from '../context/authContext'
 
 const Home = () => {
-
+    const {isAuthorized} = useContext(AuthContext)
     useEffect(()=>{
         const backend_url = import.meta.env.VITE_BACKEND_URL;
         async function sendCode()
@@ -13,7 +14,7 @@ const Home = () => {
             const urlParams = new window.URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             console.log(code)
-            const response = await axios.post(`${backend_url}/api/v1/auth/getToken?code=${code}`,{withCredentials:true}
+            const response = await axios.post(`${backend_url}/api/v1/auth/getToken?code=${code}`,{},{withCredentials:true}
         )
             console.log('RESPONSE FOR CODE',response.data);
         }
@@ -21,9 +22,10 @@ const Home = () => {
         async function getPublicandPrivateRepos()
         {
             const response = await axios.get(`${backend_url}/api/v1/repo/list`,{withCredentials:true});
-            console.log(response.data)
+            console.log(response.data);
         }
-        sendCode().then(()=>getPublicandPrivateRepos()).catch((error)=>{console.log('ERROR : '+error.message)})
+        {!isAuthorized && sendCode()}
+        getPublicandPrivateRepos()
     },[])
   return (
     <div className='md:flex md:mt-[80px]'>

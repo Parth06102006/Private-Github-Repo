@@ -2,11 +2,40 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import axios from 'axios'
+import { client } from "../config/redis.js";
+import crypto from 'crypto'
+import { Octokit } from "@octokit/rest";
+import jwt from 'jsonwebtoken'
+
+const checkAuth = asyncHandler(async(req,res)=>{
+    const token = req.cookies.token;
+    if(!token)
+    {
+        throw new ApiError(401,'No Token Found');
+    }
+    else
+    {
+        const sessionId = jwt.verify(token)?._id;
+        const githubToken = await client.get(`${sessionId}`);
+       try {
+         const octokit = new Octokit({auth:githubToken});
+         const {data} = await octokit.request('GET /user');
+         return res.status(200).json(new ApiResponse(200,'User is Authenticated',{valid:true,user:data}))
+       } catch (error) {
+            if(error.status === 401)
+            {
+                return res.status(401).clearCookie('token').json(new ApiError(401,error.message))
+            }
+            console.error(error.message);
+            throw new ApiError(500,'Error Authorzing the User');
+       }
+    }
+})
 
 const auth = asyncHandler(async(req,res)=>{
     const redirect_url = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_url=${process.env.REDIRECT_URL}&scope=repo%20read:user`;
 
-    return res.redirect(redirect_url);
+    return res.status(200).json(new ApiResponse(200,'Redirect Url Fetched',{redirect_url}));
 })
 
 const getAccessToken = asyncHandler(async(req,res)=>{
@@ -27,6 +56,14 @@ const getAccessToken = asyncHandler(async(req,res)=>{
 
     const {access_token,token_type,scope} = response.data;
 
+    const sessionId = crypto.randomBytes(16).toString('hex');
+
+    //Redis Value Set
+    await client.set(`${sessionId}`,access_token);
+    await client.expire(`${sessionId}`,3*24*60*60);
+
+    const generatedAccessToken = jwt.sign(sessionId,process.env.JWT_SECRET,{expiresIn:'3d'});
+
     if(!access_token||!token_type||!scope)
     {
         throw new ApiError(500,'Error receiving the credentials');
@@ -41,7 +78,7 @@ const getAccessToken = asyncHandler(async(req,res)=>{
     }
     console.log(options)
     console.log('Access Token : ',access_token)
-    return res.status(200).cookie('token',access_token,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
+    return res.status(200).cookie('token',generatedAccessToken,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
 })
 
 const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
@@ -107,4 +144,4 @@ const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
     }));
 })
 
-export {auth,getAccessToken,getUserInfo_Repositories}
+export {auth,checkAuth,getAccessToken,getUserInfo_Repositories}

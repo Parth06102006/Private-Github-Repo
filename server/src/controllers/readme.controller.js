@@ -72,7 +72,34 @@ const generateReadme = asyncHandler(async(req,res)=>{
     console.log(process.env.GEMINI_API_KEY)
     const ai = new GoogleGenAI({apiKey:process.env.GEMINI_API_KEY});
     // console.log(ai)
-    const prompt = `Generate a professional README.md file for the following GitHub project.\n Use the details provided. Make sure to include:\nProject Title & Description\nBadges (Stars, Forks, Issues, License, etc.)\nInstallation steps (use language as hint)\nUsage instructions\nContributing guidelines\nLicense section\nContact/Owner info\nHere are the repository details:${repoDetails}\n Important: \n- Output ONLY the README.md content. \n- Do NOT add any explanations, introductions, or extra commentary. \n- Format properly in markdown.`
+    const prompt = `Generate a clean and professional README.md file for the following    GitHub repository. 
+        Follow the exact structure and formatting given below. 
+        Do not add placeholder text or extra commentary outside the README.
+
+        README Structure:
+        1. Project Title (# Heading)
+        2. Badges (Stars, Forks, Issues, License, Last Commit)
+        3. Short Description (1–2 sentences)
+        4. Demo/Live Link (if homepage exists)
+        5. ✨ Features (bullet list)
+        6. 🚀 Getting Started
+        - Prerequisites
+        - Installation steps
+        7. 📖 Usage (clear usage example)
+        8. 🛠️ Built With (list of tech stack from repo language/topics)
+        9. 🤝 Contributing (strict contributing steps: fork, branch, commit, PR)
+        10. 📜 License (from repo license info, or "Not specified")
+        11. 👤 Contact (Owner name, GitHub profile, project link)
+
+        Repository Details:
+        [INSERT repo details string here: name, description, language, topics, stars, forks, issues, license, homepage, owner info, etc.]
+
+        The details for the README.md to refer is given here : ${repoDetails}
+
+        Rules:
+        - Only return valid Markdown.
+        - No extra explanations or placeholders.
+        - Keep it concise and professional.`
     
     const geminiResponse = await ai.models.generateContent({
         model:'gemini-2.5-pro',

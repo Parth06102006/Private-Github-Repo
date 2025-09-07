@@ -75,7 +75,7 @@ const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
     const user = response.data.login;
     console.log(user)
 
-    const publicRepoResponse = await axios.get(`https://api.github.com/users/${user}?repos?per_page=100`,{
+    const publicRepoResponse = await axios.get(`https://api.github.com/users/${user}/repos`,{
         headers:{
             'Authorization':`Bearer ${token}`
         }
@@ -90,8 +90,9 @@ const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
                 headers: { Authorization: `Bearer ${token}` }
             }
         )
+        console.log(privateResponse.data)
         if(privateResponse.data.length === 0) break;
-        privateResponse.data.map(repo=>repo.name);
+        privateRepoNames.push(privateResponse.data.map(repo=>repo.name));
         page++;
     }
 

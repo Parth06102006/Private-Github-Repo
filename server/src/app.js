@@ -2,6 +2,7 @@ import express, { urlencoded } from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import authRouter from './routes/auth.route.js'
+import readmeRouter from './routes/readme.route.js'
 import { errorHandler } from './middlewares/error.middleware.js'
 import cookieParser from 'cookie-parser'
 
@@ -17,6 +18,7 @@ app.use(urlencoded());
 app.use(cookieParser())
 
 app.use('/api/v1',authRouter);
+app.use('/api/v1',readmeRouter);
 
 app.use(errorHandler);
 

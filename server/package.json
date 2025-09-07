@@ -12,6 +12,8 @@
     "dev": "nodemon run src/index.js"
   },
   "dependencies": {
+    "@google/genai": "^1.17.0",
+    "@octokit/rest": "^22.0.0",
     "axios": "^1.11.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",

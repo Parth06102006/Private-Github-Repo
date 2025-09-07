@@ -32,22 +32,24 @@ const getAccessToken = asyncHandler(async(req,res)=>{
         throw new ApiError(500,'Error receiving the credentials');
     }
     const isDev = process.env.NODE_ENV === 'development';
+    console.log('True or Not : '+isDev)
     const options = {
         httpOnly:true,
         secure:!isDev,
-        sameSite: isDev ? 'lax' : 'none'
+        sameSite: isDev ? 'lax' : 'none',
+        expires: new Date(Date.now() + 3*24*60*60*1000)
     }
-    
+    console.log(options)
+    console.log('Access Token : ',access_token)
     return res.status(200).cookie('token',access_token,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
 })
 
 const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
-    console.log(req)
-    const token = req.cookie.token;
+    const token = req.cookies.token || req?.header('Authorization')?.replace('Bearer ','');
     console.log('Token : ',token)
     if(!token)
     {
-        throw new ApiError(400,'No Access Token Found');
+        throw new ApiError(401,'No Access Token Found');
     }
 
     const response = await axios.get(`https://api.github.com/user`,{

@@ -23,8 +23,7 @@ const Home = () => {
             const response = await axios.get(`${backend_url}/api/v1/repo/list`,{withCredentials:true});
             console.log(response.data)
         }
-        sendCode();
-        setTimeout(()=> getPublicandPrivateRepos(),5000)
+        sendCode().then(()=>getPublicandPrivateRepos()).catch((error)=>{console.log('ERROR : '+error.message)})
     },[])
   return (
     <div className='md:flex md:mt-[80px]'>

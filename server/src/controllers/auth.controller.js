@@ -25,26 +25,25 @@ const getAccessToken = asyncHandler(async(req,res)=>{
         }
     )
 
-    console.log(response)
-
     const {access_token,token_type,scope} = response.data;
 
     if(!access_token||!token_type||!scope)
     {
         throw new ApiError(500,'Error receiving the credentials');
     }
-
+    const isDev = process.env.NODE_ENV === 'development';
     const options = {
         httpOnly:true,
-        secure:!(process.env.NODE_ENV === 'development'),
-        sameSite:(process.env.NODE_ENV === 'development') ? 'none' : 'lax'
+        secure:!isDev,
+        sameSite: isDev ? 'lax' : 'none'
     }
     
     return res.status(200).cookie('token',access_token,options).json(new ApiResponse(200,'Successfully Fetched Access Token'))
 })
 
 const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
-    const token = req.cookies.token || req.body.token;
+    console.log(req)
+    const token = req.cookie.token;
     console.log('Token : ',token)
     if(!token)
     {

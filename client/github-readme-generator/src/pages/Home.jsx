@@ -10,24 +10,21 @@ const Home = () => {
         const backend_url = import.meta.env.VITE_BACKEND_URL;
         async function sendCode()
         {
-            const urlParams = window.URLSearchParams(window.location.search);
+            const urlParams = new window.URLSearchParams(window.location.search);
             const code = urlParams.get('code');
-            const response = await axios.post(`${backend_url}/api/v1/auth/getToken`,{
-                code
-            },
-            {
-                headers:{"Content-Type":"application/json"}
-            }
+            console.log(code)
+            const response = await axios.post(`${backend_url}/api/v1/auth/getToken?code=${code}`,{withCredentials:true}
         )
-            console.log(response);
+            console.log('RESPONSE FOR CODE',response.data);
         }
 
         async function getPublicandPrivateRepos()
         {
-            await axios.get(`${backend_url}/api/v1/repo/list`)
+            const response = await axios.get(`${backend_url}/api/v1/repo/list`,{withCredentials:true});
+            console.log(response.data)
         }
         sendCode();
-        getPublicandPrivateRepos();
+        setTimeout(()=> getPublicandPrivateRepos(),5000)
     },[])
   return (
     <div className='md:flex md:mt-[80px]'>
@@ -57,9 +54,9 @@ const Home = () => {
                 </select>
                 <select defaultValue="Pick the Repository" className="select select-primary md:w-ful">
                     <option disabled={true}>Pick a Private Repository</option>
-                    <option><Lock size={10}/> Chrome</option>
-                    <option><Lock size={10}/> FireFox</option>
-                    <option><Lock size={10}/> Safari</option>
+                    <option>Chrome</option>
+                    <option>FireFox</option>
+                    <option>Safari</option>
                 </select>
                 </div>
             </fieldset>

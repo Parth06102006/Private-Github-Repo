@@ -1,11 +1,14 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState , useRef } from 'react'
 import RTE from './RTE'
 import {Brain,Lock} from 'lucide-react'
 import axios from 'axios'
 import { AuthContext } from '../context/authContext'
 
 const Home = () => {
-    const { isAuthorized, handleOAuthCallback } = useContext(AuthContext)
+    const { isAuthorized, handleOAuthCallback } = useContext(AuthContext);
+    const ref = useRef('')
+    const [publicRepos,setIsPublicRepos]= useState([]);
+    const [privateRepos,setIsPrivateRepos]= useState([]);
     
     useEffect(() => {
         const backend_url = import.meta.env.VITE_BACKEND_URL;
@@ -14,6 +17,8 @@ const Home = () => {
             try {
                 const response = await axios.get(`${backend_url}/api/v1/repo/list`, {withCredentials: true});
                 console.log('Repositories:', response.data);
+                setIsPublicRepos(response.data.data.publicRepos);
+                setIsPrivateRepos(response.data.data.privateRepos);
             } catch (error) {
                 console.error('Failed to get repos:', error);
             }
@@ -36,6 +41,12 @@ const Home = () => {
         }
     }, [isAuthorized, handleOAuthCallback])
 
+    function handleChange(event)
+    {
+        ref.current = event.target.value;
+        console.log('Selected Repository : ',ref.current);
+    }
+
     return (
         <div className='md:flex md:mt-[80px]'>
             <h1 className='block md:hidden text-3xl font-bold text-center mt-3 mb-8'>Github Readme Generator</h1>
@@ -55,17 +66,14 @@ const Home = () => {
                 <fieldset className="mt-6 md:mt-3 ">
                     <legend className="fieldset-legend text-2xl  mt-3">Github Repositories</legend>
                     <div className='flex gap-4'>
-                        <select defaultValue="Pick A Repository" className="select select-primary md:w-ful">
-                            <option disabled={true}>Pick a Public Repository</option>
-                            <option>Chrome</option>
-                            <option>FireFox</option>
-                            <option>Safari</option>
-                        </select>
-                        <select defaultValue="Pick the Repository" className="select select-primary md:w-ful">
-                            <option disabled={true}>Pick a Private Repository</option>
-                            <option>Chrome</option>
-                            <option>FireFox</option>
-                            <option>Safari</option>
+                        <select defaultValue="Pick a Repository" className="select select-primary md:w-full" value={ref.current.value} onChange={(event)=>{handleChange(event)}}>
+                            <option disabled={true}>Pick a Repository</option>
+                            {publicRepos?.map((r,idx)=>(
+                                <option key={idx} value={r}>{r}</option>
+                            ))}
+                            {privateRepos?.map((r,idx)=>(
+                                <option key={idx} value={r}><Lock size={14}/>  {r}</option>
+                            ))}
                         </select>
                     </div>
                 </fieldset>

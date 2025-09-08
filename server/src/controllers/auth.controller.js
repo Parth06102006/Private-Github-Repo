@@ -135,7 +135,7 @@ const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
     ,{
         user:{login,name,avatar_url,html_url,location,email,public_repos,total_private_repos,followers,following,created_at,plan},
         publicRepos:publicRepoNames,
-        privateRepos:privateRepoNames
+        privateRepos:privateRepoNames[0]
     }));
 })
 

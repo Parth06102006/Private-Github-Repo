@@ -3,10 +3,14 @@ import RTE from './RTE'
 import {Brain,Lock,Mail,Github,MapPinCheckInside  } from 'lucide-react'
 import axios from 'axios'
 import { AuthContext } from '../context/authContext'
+import { generateReadme } from '../../utils/generateReadme'
+import toast,{Toaster} from 'react-hot-toast'
+
 
 const Home = () => {
     const { isAuthorized, handleOAuthCallback } = useContext(AuthContext);
     const ref = useRef('')
+    const [content,setContent]= useState('');
     const [publicRepos,setPublicRepos]= useState([]);
     const [privateRepos,setPrivateRepos]= useState([]);
     const [userInfo,setUserInfo] = useState([]);
@@ -48,10 +52,29 @@ const Home = () => {
         console.log('Selected Repository : ',ref.current);
     }
 
-    // async function generateReadme()
-    // {
-    //     const {data} =
-    // }
+    async function getReadme() {
+        if (!ref.current) {
+            toast.error('Please select a repository first');
+            return;
+        }
+        
+        if (!userInfo.login) {
+            toast.error('User information not loaded');
+            return;
+        }
+
+        try {
+            const loadingToast = toast.loading('Generating README...');
+            
+            const value = await generateReadme(ref.current, userInfo.login);
+            setContent(value);
+            toast.dismiss(loadingToast);
+            toast.success('README generated successfully!');
+        } catch (error) {
+            toast.error(error.message || 'Failed to generate README');
+            console.error('Error generating README:', error);
+        }
+    }
 
     return (
         <div className='md:flex md:mt-[80px]'>
@@ -115,6 +138,7 @@ const Home = () => {
                 </fieldset>
                 <div className='md:ml-40'>
                     <button
+                        onClick={getReadme}
                         className="hidden md:flex btn btn-xl btn-outline btn-secondary items-center gap-2 mt-5 "
                     >
                         <Brain size={20} />
@@ -122,7 +146,8 @@ const Home = () => {
                     </button>
                 </div>
             </div>
-            <RTE/>
+            <RTE generatedValue={content} selectedRepo={ref.current} owner={userInfo.login} email={userInfo.email}/>
+            <Toaster/>
         </div>
     )
 }

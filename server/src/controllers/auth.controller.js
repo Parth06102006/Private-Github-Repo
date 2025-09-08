@@ -8,28 +8,21 @@ import { Octokit } from "@octokit/rest";
 import jwt from 'jsonwebtoken'
 
 const checkAuth = asyncHandler(async(req,res)=>{
-    const token = req.cookies.token;
-    if(!token)
-    {
-        throw new ApiError(401,'No Token Found');
-    }
-    else
-    {
-        const sessionId = jwt.verify(token)?._id;
-        const githubToken = await client.get(`${sessionId}`);
        try {
-         const octokit = new Octokit({auth:githubToken});
+         const octokit = new Octokit({auth:req.token});
          const {data} = await octokit.request('GET /user');
+         console.log('User is Authenticated')
          return res.status(200).json(new ApiResponse(200,'User is Authenticated',{valid:true,user:data}))
        } catch (error) {
             if(error.status === 401)
             {
+                console.log('User not Found')
+                await client.del(req.sessionId)
                 return res.status(401).clearCookie('token').json(new ApiError(401,error.message))
             }
             console.error(error.message);
-            throw new ApiError(500,'Error Authorzing the User');
+            throw new ApiError(500,'Error Verifying the User');
        }
-    }
 })
 
 const auth = asyncHandler(async(req,res)=>{
@@ -40,6 +33,7 @@ const auth = asyncHandler(async(req,res)=>{
 
 const getAccessToken = asyncHandler(async(req,res)=>{
     const {code} = req.query;
+    console.log('CODE : ',code)
     if(!code)
         {
             throw new ApiError(400,'No Code Found');
@@ -53,17 +47,18 @@ const getAccessToken = asyncHandler(async(req,res)=>{
             headers:{Accept:'application/json'}
         }
     )
-
+    console.log(response)
     const {access_token,token_type,scope} = response.data;
 
     const sessionId = crypto.randomBytes(16).toString('hex');
-
+    console.log('SESSION ID : ',sessionId)
     //Redis Value Set
     await client.set(`${sessionId}`,access_token);
     await client.expire(`${sessionId}`,3*24*60*60);
+    console.log('SUCCESSFULLY HAVE SET THE VALUE IN REDIS')
 
-    const generatedAccessToken = jwt.sign(sessionId,process.env.JWT_SECRET,{expiresIn:'3d'});
-
+    const generatedAccessToken = jwt.sign({_id:sessionId},process.env.JWT_SECRET,{expiresIn:process.env.TOKEN_EXPIRY});
+    console.log('JWT ACCESS TOKEN : ',generatedAccessToken)
     if(!access_token||!token_type||!scope)
     {
         throw new ApiError(500,'Error receiving the credentials');
@@ -82,7 +77,7 @@ const getAccessToken = asyncHandler(async(req,res)=>{
 })
 
 const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
-    const token = req.cookies.token || req?.header('Authorization')?.replace('Bearer ','');
+    const token = req.token;
     console.log('Token : ',token)
     if(!token)
     {

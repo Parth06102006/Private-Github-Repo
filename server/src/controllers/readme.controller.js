@@ -6,11 +6,7 @@ import axios from 'axios'
 import { Octokit } from "@octokit/rest";
 
 const generateReadme = asyncHandler(async(req,res)=>{
-    const token = req.cookies.token;
-    if(!token)
-    {
-        throw new ApiError(401,'Token not found');
-    }
+    const token = req.token;
     const {repo,owner} = req.body;
     if(!repo)
     {
@@ -114,12 +110,7 @@ const generateReadme = asyncHandler(async(req,res)=>{
 })
 
 const publishGithub = asyncHandler(async(req,res)=>{
-        const token = req.cookies.token;
-        if(!token)
-        {
-            throw new ApiError(401,'No Token Found');
-        }
-
+        const token = req.token;
         const { owner, repo, content, email } = req.body;
 
         if(!owner||!repo||!content||!email)

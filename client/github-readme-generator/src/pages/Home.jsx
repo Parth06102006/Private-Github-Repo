@@ -8,7 +8,7 @@ import toast,{Toaster} from 'react-hot-toast'
 
 
 const Home = () => {
-    const { isAuthorized, handleOAuthCallback } = useContext(AuthContext);
+    const { isAuthorized, handleOAuthCallback,setIsAuthorized } = useContext(AuthContext);
     const ref = useRef('')
     const [content,setContent]= useState('');
     const [publicRepos,setPublicRepos]= useState([]);

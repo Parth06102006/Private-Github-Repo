@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState , useRef } from 'react'
 import RTE from './RTE'
-import {Brain,Lock,Mail,Github,MapPinCheckInside  } from 'lucide-react'
+import {Brain,Lock,Mail,Github,MapPinCheckInside,LogOut  } from 'lucide-react'
 import axios from 'axios'
 import { AuthContext } from '../context/authContext'
 import { generateReadme } from '../../utils/generateReadme'
@@ -14,6 +14,8 @@ const Home = () => {
     const [publicRepos,setPublicRepos]= useState([]);
     const [privateRepos,setPrivateRepos]= useState([]);
     const [userInfo,setUserInfo] = useState([]);
+    const [isLoggingOut,setIsLoggingOut] = useState(false);
+
     useEffect(() => {
         const backend_url = import.meta.env.VITE_BACKEND_URL;
 
@@ -75,9 +77,58 @@ const Home = () => {
             console.error('Error generating README:', error);
         }
     }
+    async function logout() {
+        if (isLoggingOut) return; // Prevent multiple logout calls
+        
+        setIsLoggingOut(true);
+        try {
+            const loadingToast = toast.loading('Logging out...');
+            
+            // Call logout API
+            await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/logout`, 
+                { withCredentials: true }
+            );
+            
+            // Update auth state
+            setIsAuthorized(false);
+            
+            // Clear local state
+            setPublicRepos([]);
+            setPrivateRepos([]);
+            setUserInfo({});
+            setContent('');
+            ref.current = '';
+            
+            toast.dismiss(loadingToast);
+            toast.success('Successfully logged out!');
+            
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Even if API call fails, clear local state
+            setIsAuthorized(false);
+            setPublicRepos([]);
+            setPrivateRepos([]);
+            setUserInfo({});
+            setContent('');
+            ref.current = '';
+            
+            toast.error('Logged out (some cleanup may have failed)');
+        } finally {
+            setIsLoggingOut(false);
+        }
+    }
 
     return (
-        <div className='md:flex md:mt-[80px]'>
+        <div className='relative md:flex'>
+            <button 
+                onClick={logout}
+                disabled={isLoggingOut}
+                className={`btn btn-error text-white sticky m-2 md:top-0 ${isLoggingOut ? 'loading' : ''}`}
+            >
+                {!isLoggingOut && <LogOut size={16} />}
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </button>
             <h1 className='block md:hidden text-3xl font-bold text-center mt-3 mb-8'>Github Readme Generator</h1>
             <div className='flex h-1/2 items-center justify-center md:inline-block md:ml-5 mt-15'>
                 <div className='mr-5 bg-blue-900/10 p-4 rounded-t-4xl max-w-fit '>

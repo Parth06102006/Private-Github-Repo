@@ -25,6 +25,26 @@ const checkAuth = asyncHandler(async(req,res)=>{
        }
 })
 
+const logout = asyncHandler(async(req,res)=>{
+    try {
+        await client.del(req.sessionId)
+
+        const isDev = process.env.NODE_ENV === 'development';
+        const options = {
+            httpOnly: true,
+            secure: !isDev,
+            sameSite: isDev ? 'lax' : 'none',
+        }
+        
+        return res.status(200).clearCookie('token',options).json(new ApiError(200,'User Logged Out Successfully'))
+    } catch (error) {
+        console.error('Logout error:', error);
+        return res.status(200)
+            .clearCookie('token')
+            .json(new ApiResponse(200, 'Logged out (with cleanup error)'));
+    }
+})
+
 const auth = asyncHandler(async(req,res)=>{
     const redirect_url = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&redirect_url=${process.env.REDIRECT_URL}&scope=repo%20read:user`;
 
@@ -139,4 +159,4 @@ const getUserInfo_Repositories = asyncHandler(async(req,res)=>{
     }));
 })
 
-export {auth,checkAuth,getAccessToken,getUserInfo_Repositories}
+export {auth,checkAuth,logout,getAccessToken,getUserInfo_Repositories}

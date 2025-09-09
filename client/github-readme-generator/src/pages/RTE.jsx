@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import MDEditor from "@uiw/react-md-editor";
 import { Copy,Github,Brain } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,6 +8,12 @@ import axios from "axios";
 export default function RTE({ generatedValue,selectedRepo,owner,email }) {
   const [value, setValue] = useState(generatedValue || "");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (generatedValue) {
+      setValue(generatedValue);
+    }
+  }, [generatedValue]);
 
   async function getReadme()
     {
